@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.*
+
+# Flask instance data
+instance/
+
+# Testing/typing/cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+test/
+tests/
+
+# IDEs/editors
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# App data/artifacts
+uploads/
+notes.db
+*.sqlite3
+
+# Downloaded model assets (if generated locally)
+model/

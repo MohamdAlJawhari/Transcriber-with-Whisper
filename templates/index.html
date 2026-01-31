@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Offline Transcriber</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; }
+        h1 { color: #333; }
+        form { margin-bottom: 20px; }
+        textarea { width: 100%; height: 80px; }
+
+        button, a.button-link {
+            padding: 6px 12px;
+            margin-top: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-secondary { background-color: #e5e7eb; color: #111827; }
+        .btn-danger { background-color: #dc2626; color: white; }
+        .btn-ghost { background-color: transparent; color: #2563eb; }
+
+        .note {
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .note-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        small { color: #6b7280; }
+        .recording-controls {
+            margin-bottom: 10px;
+        }
+        .status {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        /* Spinner overlay */
+        .spinner-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .spinner-box {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .spinner-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #2563eb;
+            margin: 0 auto 10px auto;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Offline Transcriber 🗣️➡️📝</h1>
+
+    <!-- Spinner overlay -->
+    <div id="spinner" class="spinner-overlay">
+        <div class="spinner-box">
+            <div class="spinner-circle"></div>
+            <p>Transcribing, please wait...</p>
+        </div>
+    </div>
+
+    <!-- ====== Section 1: Browser recording ====== -->
+    <h2>Record audio with your microphone</h2>
+    <div class="recording-controls">
+        <button id="start-record-btn" class="btn-primary">Start recording</button>
+        <button id="stop-record-btn" class="btn-secondary" disabled>Stop recording</button>
+        <p class="status" id="record-status">Status: idle</p>
+    </div>
+
+    <audio id="playback" controls style="display:none; width:100%; margin-bottom: 10px;"></audio>
+
+    <hr>
+
+    <!-- ====== Section 2: Upload audio file ====== -->
+    <h2>Transcribe audio file</h2>
+    <form id="upload-form" action="{{ url_for('transcribe_audio_route') }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="audio" accept="audio/*" required>
+        <br><br>
+        <button type="submit" class="btn-primary">Upload & Transcribe</button>
+    </form>
+
+    <hr>
+
+    <!-- ====== Section 3: Manual note ====== -->
+    <h2>Create a note manually</h2>
+    <form action="{{ url_for('create_note') }}" method="post">
+        <textarea name="content" placeholder="Write something..."></textarea>
+        <br>
+        <button type="submit" class="btn-secondary">Save note</button>
+    </form>
+
+    <hr>
+
+    <!-- ====== Section 4: List notes / transcriptions ====== -->
+    <h2>Saved notes / transcriptions</h2>
+    {% if notes %}
+        {% for note in notes %}
+            <div class="note">
+                <div class="note-header">
+                    <strong>Note #{{ note.id }}</strong>
+                    <div class="note-actions">
+                        <a href="{{ url_for('view_note', note_id=note.id) }}" class="button-link btn-secondary">View</a>
+                        <a href="{{ url_for('download_note', note_id=note.id) }}" class="button-link btn-ghost">Download .txt</a>
+                        <form action="{{ url_for('delete_note', note_id=note.id) }}" method="post" style="margin: 0;">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                <p>{{ note.content[:200] }}{% if note.content|length > 200 %}...{% endif %}</p>
+                {% if note.created_at %}
+                    <small>Created at: {{ note.created_at }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No notes yet. Add one above 😊</p>
+    {% endif %}
+
+    <!-- ====== JavaScript: Recording + spinner logic ====== -->
+    <script>
+        const startBtn = document.getElementById('start-record-btn');
+        const stopBtn = document.getElementById('stop-record-btn');
+        const statusEl = document.getElementById('record-status');
+        const playbackEl = document.getElementById('playback');
+        const uploadForm = document.getElementById('upload-form');
+        const spinnerEl = document.getElementById('spinner');
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        function showSpinner() {
+            spinnerEl.style.display = "flex";
+        }
+
+        function hideSpinner() {
+            spinnerEl.style.display = "none";
+        }
+
+        async function initMedia() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.onstart = () => {
+                    audioChunks = [];
+                    statusEl.textContent = "Status: recording...";
+                    playbackEl.style.display = "none";
+                    playbackEl.src = "";
+                };
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    statusEl.textContent = "Status: recording stopped. Preparing upload...";
+
+                    // Create single Blob from chunks (webm)
+                    const blob = new Blob(audioChunks, { type: "audio/webm" });
+
+                    // Optional: preview playback
+                    const audioUrl = URL.createObjectURL(blob);
+                    playbackEl.src = audioUrl;
+                    playbackEl.style.display = "block";
+
+                    // Send blob to backend as "audio" file
+                    const formData = new FormData();
+                    const fileName = "recording.webm";  // extension matches ALLOWED_EXTENSIONS
+                    formData.append("audio", blob, fileName);
+
+                    try {
+                        statusEl.textContent = "Status: uploading & transcribing...";
+                        showSpinner();
+                        const response = await fetch("{{ url_for('transcribe_audio_route') }}", {
+                            method: "POST",
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            statusEl.textContent = "Status: transcription complete. Reloading...";
+                            // Reload page to show new transcription
+                            window.location.reload();
+                        } else {
+                            statusEl.textContent = "Status: error during transcription (HTTP " + response.status + ")";
+                            hideSpinner();
+                            alert("Error during transcription. Check server logs.");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        statusEl.textContent = "Status: error sending recording.";
+                        hideSpinner();
+                        alert("Failed to send recording to server.");
+                    }
+                };
+
+            } catch (err) {
+                console.error("Could not access microphone:", err);
+                statusEl.textContent = "Status: microphone permission denied or not available.";
+                startBtn.disabled = true;
+                stopBtn.disabled = true;
+            }
+        }
+
+        // Initialize mic permissions when page loads
+        window.addEventListener("load", initMedia);
+
+        startBtn.addEventListener("click", () => {
+            if (mediaRecorder && mediaRecorder.state === "inactive") {
+                mediaRecorder.start();
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            }
+        });
+
+        stopBtn.addEventListener("click", () => {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        });
+
+        // Show spinner when user submits the upload form
+        if (uploadForm) {
+            uploadForm.addEventListener("submit", () => {
+                showSpinner();
+            });
+        }
+    </script>
+</body>
+</html>
