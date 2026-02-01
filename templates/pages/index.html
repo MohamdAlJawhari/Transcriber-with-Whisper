@@ -24,21 +24,15 @@
 
     {% include "partials/spinner.html" %}
 
-    <section class="panel">
-        {% include "partials/recording.html" %}
-    </section>
+    <div class="two-column">
+        <section class="panel">
+            {% include "partials/recording.html" %}
+        </section>
 
-    <div class="divider"></div>
-
-    <section class="panel">
-        {% include "partials/upload.html" %}
-    </section>
-
-    <div class="divider"></div>
-
-    <section class="panel">
-        {% include "partials/manual_note.html" %}
-    </section>
+        <section class="panel">
+            {% include "partials/upload.html" %}
+        </section>
+    </div>
 
     <div class="divider"></div>
 

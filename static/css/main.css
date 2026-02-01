@@ -157,6 +157,12 @@ body {
     border: 1px solid rgba(231, 223, 212, 0.8);
 }
 
+.two-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
 .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(31, 41, 51, 0.15), transparent);
@@ -332,6 +338,10 @@ small {
 
 @media (max-width: 900px) {
     .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .two-column {
         grid-template-columns: 1fr;
     }
 }
