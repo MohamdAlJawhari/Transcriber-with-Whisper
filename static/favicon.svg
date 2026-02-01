@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <clipPath id="mic-clip">
+      <rect x="48" y="14" width="32" height="64" rx="16" ry="16"/>
+    </clipPath>
+  </defs>
+  <rect width="128" height="128" fill="#ffffff"/>
+  <g fill="#1d74ff">
+    <rect x="48" y="14" width="32" height="64" rx="16" ry="16"/>
+    <path d="M35 55c0 16 13 29 29 29h4c16 0 29-13 29-29h-8c0 11.6-9.4 21-21 21h-4c-11.6 0-21-9.4-21-21h-8z"/>
+    <rect x="52" y="84" width="24" height="8" rx="4"/>
+    <rect x="60" y="92" width="8" height="18" rx="4"/>
+  </g>
+  <circle cx="84" cy="78" r="30" fill="#1d74ff"/>
+  <path d="M74 66h20a4 4 0 0 1 4 4v4h-6v-2H86v22h-4V72h-6v2h-6v-4a4 4 0 0 1 4-4z" fill="#ffffff"/>
+</svg>

@@ -25,6 +25,8 @@
         }
     }
 
+    const transcribeUrl = document.body ? document.body.dataset.transcribeUrl : null;
+
     async function initMedia() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -59,7 +61,7 @@
                 try {
                     statusEl.textContent = 'Status: uploading & transcribing...';
                     showSpinner();
-                    const response = await fetch('/transcribe', {
+                    const response = await fetch(transcribeUrl || '/transcribe', {
                         method: 'POST',
                         body: formData,
                     });
