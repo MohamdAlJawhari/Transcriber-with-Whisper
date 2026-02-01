@@ -1,5 +1,6 @@
 import os
-from flask import Blueprint, Response, abort, redirect, render_template, request, url_for, current_app
+import uuid
+from flask import Blueprint, Response, abort, redirect, render_template, request, url_for, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 
 from ..db import get_connection
@@ -14,7 +15,7 @@ def home():
     """Show the main page with the form + list of notes from the DB."""
     conn = get_connection()
     rows = conn.execute(
-        "SELECT id, content, created_at FROM notes ORDER BY id DESC"
+        "SELECT id, content, audio_path, created_at FROM notes ORDER BY id DESC"
     ).fetchall()
     conn.close()
 
@@ -47,8 +48,9 @@ def transcribe_audio_route():
         print("Rejected file with invalid extension:", file.filename)
         return redirect(url_for(".home"))
 
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+    safe_name = secure_filename(file.filename)
+    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+    filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], unique_name)
     file.save(filepath)
 
     try:
@@ -56,12 +58,17 @@ def transcribe_audio_route():
 
         if text:
             conn = get_connection()
-            conn.execute("INSERT INTO notes (content) VALUES (?)", (text,))
+            conn.execute(
+                "INSERT INTO notes (content, audio_path) VALUES (?, ?)",
+                (text, unique_name),
+            )
             conn.commit()
             conn.close()
+        else:
+            if os.path.exists(filepath):
+                os.remove(filepath)
     except Exception as e:
         print("Error during transcription:", e)
-    finally:
         if os.path.exists(filepath):
             os.remove(filepath)
 
@@ -73,7 +80,7 @@ def view_note(note_id):
     """View a single transcription with edit/download options."""
     conn = get_connection()
     row = conn.execute(
-        "SELECT id, content, created_at FROM notes WHERE id = ?",
+        "SELECT id, content, audio_path, created_at FROM notes WHERE id = ?",
         (note_id,),
     ).fetchone()
     conn.close()
@@ -128,8 +135,22 @@ def download_note(note_id):
 def delete_note(note_id):
     """Delete a note from the database by id."""
     conn = get_connection()
+    row = conn.execute(
+        "SELECT audio_path FROM notes WHERE id = ?",
+        (note_id,),
+    ).fetchone()
     conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
     conn.commit()
     conn.close()
 
+    if row and row["audio_path"]:
+        audio_file = os.path.join(current_app.config["UPLOAD_FOLDER"], row["audio_path"])
+        if os.path.exists(audio_file):
+            os.remove(audio_file)
+
     return redirect(url_for(".home"))
+
+
+@bp.route("/audio/<path:filename>")
+def audio_file(filename):
+    return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)

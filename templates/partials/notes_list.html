@@ -1,4 +1,4 @@
-<h2>Saved notes / transcriptions</h2>
+<h2 class="section-title">Saved notes / transcriptions</h2>
 {% if notes %}
     {% for note in notes %}
         <div class="note">
@@ -13,6 +13,11 @@
                 </div>
             </div>
             <p>{{ note.content[:200] }}{% if note.content|length > 200 %}...{% endif %}</p>
+            {% if note.audio_path %}
+                <audio controls class="note-audio">
+                    <source src="{{ url_for('main.audio_file', filename=note.audio_path) }}">
+                </audio>
+            {% endif %}
             {% if note.created_at %}
                 <small>Created at: {{ note.created_at }}</small>
             {% endif %}

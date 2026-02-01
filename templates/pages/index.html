@@ -3,21 +3,46 @@
 {% block title %}Offline Transcriber{% endblock %}
 
 {% block content %}
-    <h1>Offline Transcriber 🗣️➡️📝</h1>
+    <section class="hero">
+        <div class="hero-copy">
+            <p class="eyebrow">Offline speech to text</p>
+            <h1>Turn voice into clean notes.</h1>
+            <p class="lead">
+                Record in-browser or upload a file. Whisper runs locally, so your
+                audio never leaves your machine.
+            </p>
+        </div>
+        <div class="hero-card">
+            <div class="hero-card-title">Session checklist</div>
+            <ul class="hero-list">
+                <li>Use clear audio with low background noise.</li>
+                <li>Shorter clips yield cleaner transcription.</li>
+                <li>Edit and export notes instantly.</li>
+            </ul>
+        </div>
+    </section>
 
     {% include "partials/spinner.html" %}
 
-    {% include "partials/recording.html" %}
+    <section class="panel">
+        {% include "partials/recording.html" %}
+    </section>
 
-    <hr>
+    <div class="divider"></div>
 
-    {% include "partials/upload.html" %}
+    <section class="panel">
+        {% include "partials/upload.html" %}
+    </section>
 
-    <hr>
+    <div class="divider"></div>
 
-    {% include "partials/manual_note.html" %}
+    <section class="panel">
+        {% include "partials/manual_note.html" %}
+    </section>
 
-    <hr>
+    <div class="divider"></div>
 
-    {% include "partials/notes_list.html" %}
+    <section class="panel">
+        {% include "partials/notes_list.html" %}
+    </section>
 {% endblock %}

@@ -3,24 +3,36 @@
 {% block title %}Transcription #{{ note.id }}{% endblock %}
 
 {% block content %}
-    <h1>Transcription #{{ note.id }}</h1>
+    <section class="panel">
+        <div class="note-title-row">
+            <div>
+                <p class="eyebrow">Transcription</p>
+                <h1>Note #{{ note.id }}</h1>
+                {% if note.created_at %}
+                    <small class="meta">Created at: {{ note.created_at }}</small>
+                {% endif %}
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('main.home') }}" class="button-link btn-secondary">← Back to list</a>
+                <a href="{{ url_for('main.download_note', note_id=note.id) }}" class="button-link btn-primary">Download as .txt</a>
+                <form action="{{ url_for('main.delete_note', note_id=note.id) }}" method="post" class="inline-form">
+                    <button type="submit" class="btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
 
-    {% if note.created_at %}
-        <small>Created at: {{ note.created_at }}</small>
-    {% endif %}
+        <div class="divider"></div>
 
-    <div class="header-actions">
-        <a href="{{ url_for('main.home') }}" class="button-link btn-secondary">← Back to list</a>
-        <a href="{{ url_for('main.download_note', note_id=note.id) }}" class="button-link btn-primary">Download as .txt</a>
-        <form action="{{ url_for('main.delete_note', note_id=note.id) }}" method="post" class="inline-form">
-            <button type="submit" class="btn-danger">Delete</button>
+        <h2 class="section-title">Edit transcription</h2>
+        {% if note.audio_path %}
+            <audio controls class="note-audio">
+                <source src="{{ url_for('main.audio_file', filename=note.audio_path) }}">
+            </audio>
+        {% endif %}
+        <form action="{{ url_for('main.edit_note', note_id=note.id) }}" method="post" class="note-editor">
+            <textarea name="content">{{ note.content }}</textarea>
+            <br>
+            <button type="submit" class="btn-primary">Save changes</button>
         </form>
-    </div>
-
-    <h2>Edit transcription</h2>
-    <form action="{{ url_for('main.edit_note', note_id=note.id) }}" method="post">
-        <textarea name="content">{{ note.content }}</textarea>
-        <br>
-        <button type="submit" class="btn-primary">Save changes</button>
-    </form>
+    </section>
 {% endblock %}
