@@ -1,0 +1,6 @@
+<h2>Create a note manually</h2>
+<form action="{{ url_for('main.create_note') }}" method="post">
+    <textarea name="content" placeholder="Write something..."></textarea>
+    <br>
+    <button type="submit" class="btn-secondary">Save note</button>
+</form>

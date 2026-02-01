@@ -8,7 +8,11 @@ from .utils import ensure_directory
 
 
 def create_app(config_object=Config):
-    app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
+    app = Flask(
+        __name__,
+        template_folder=str(BASE_DIR / "templates"),
+        static_folder=str(BASE_DIR / "static"),
+    )
     app.config.from_object(config_object)
 
     ensure_directory(app.config["UPLOAD_FOLDER"])

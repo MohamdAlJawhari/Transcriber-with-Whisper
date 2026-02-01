@@ -50,7 +50,8 @@ download_model.py   Downloads Whisper model into ./model
 model/              Local Whisper model files
 uploads/            Temporary uploaded files
 notes.db            SQLite database (notes)
-templates/          HTML templates
+templates/          HTML templates (layouts, pages, partials)
+static/             CSS and JS assets
 ```
 
 ## Configuration

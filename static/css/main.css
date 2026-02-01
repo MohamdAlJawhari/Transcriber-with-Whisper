@@ -1,0 +1,118 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 20px auto;
+}
+
+.container {
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 0 16px;
+}
+
+h1 { color: #333; }
+
+form { margin-bottom: 20px; }
+
+textarea {
+    width: 100%;
+    height: 80px;
+}
+
+button, a.button-link {
+    padding: 6px 12px;
+    margin-top: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+
+.btn-primary { background-color: #2563eb; color: white; }
+.btn-secondary { background-color: #e5e7eb; color: #111827; }
+.btn-danger { background-color: #dc2626; color: white; }
+.btn-ghost { background-color: transparent; color: #2563eb; }
+
+.note {
+    border: 1px solid #d1d5db;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+}
+
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.note-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+small { color: #6b7280; }
+
+.recording-controls {
+    margin-bottom: 10px;
+}
+
+.status {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.playback {
+    display: none;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.inline-form {
+    display: inline;
+    margin: 0;
+}
+
+/* Spinner overlay */
+.spinner-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.spinner-box {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.spinner-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #2563eb;
+    margin: 0 auto 10px auto;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

@@ -1,0 +1,23 @@
+<h2>Saved notes / transcriptions</h2>
+{% if notes %}
+    {% for note in notes %}
+        <div class="note">
+            <div class="note-header">
+                <strong>Note #{{ note.id }}</strong>
+                <div class="note-actions">
+                    <a href="{{ url_for('main.view_note', note_id=note.id) }}" class="button-link btn-secondary">View</a>
+                    <a href="{{ url_for('main.download_note', note_id=note.id) }}" class="button-link btn-ghost">Download .txt</a>
+                    <form action="{{ url_for('main.delete_note', note_id=note.id) }}" method="post" class="inline-form">
+                        <button type="submit" class="btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+            <p>{{ note.content[:200] }}{% if note.content|length > 200 %}...{% endif %}</p>
+            {% if note.created_at %}
+                <small>Created at: {{ note.created_at }}</small>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No notes yet. Add one above 😊</p>
+{% endif %}

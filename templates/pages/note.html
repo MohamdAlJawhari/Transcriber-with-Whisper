@@ -1,0 +1,26 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Transcription #{{ note.id }}{% endblock %}
+
+{% block content %}
+    <h1>Transcription #{{ note.id }}</h1>
+
+    {% if note.created_at %}
+        <small>Created at: {{ note.created_at }}</small>
+    {% endif %}
+
+    <div class="header-actions">
+        <a href="{{ url_for('main.home') }}" class="button-link btn-secondary">← Back to list</a>
+        <a href="{{ url_for('main.download_note', note_id=note.id) }}" class="button-link btn-primary">Download as .txt</a>
+        <form action="{{ url_for('main.delete_note', note_id=note.id) }}" method="post" class="inline-form">
+            <button type="submit" class="btn-danger">Delete</button>
+        </form>
+    </div>
+
+    <h2>Edit transcription</h2>
+    <form action="{{ url_for('main.edit_note', note_id=note.id) }}" method="post">
+        <textarea name="content">{{ note.content }}</textarea>
+        <br>
+        <button type="submit" class="btn-primary">Save changes</button>
+    </form>
+{% endblock %}

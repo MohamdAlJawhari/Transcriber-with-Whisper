@@ -1,0 +1,23 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Offline Transcriber{% endblock %}
+
+{% block content %}
+    <h1>Offline Transcriber 🗣️➡️📝</h1>
+
+    {% include "partials/spinner.html" %}
+
+    {% include "partials/recording.html" %}
+
+    <hr>
+
+    {% include "partials/upload.html" %}
+
+    <hr>
+
+    {% include "partials/manual_note.html" %}
+
+    <hr>
+
+    {% include "partials/notes_list.html" %}
+{% endblock %}

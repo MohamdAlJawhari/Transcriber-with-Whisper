@@ -18,7 +18,7 @@ def home():
     ).fetchall()
     conn.close()
 
-    return render_template("index.html", notes=rows)
+    return render_template("pages/index.html", notes=rows)
 
 
 @bp.route("/create", methods=["POST"])
@@ -81,7 +81,7 @@ def view_note(note_id):
     if row is None:
         abort(404)
 
-    return render_template("note.html", note=row)
+    return render_template("pages/note.html", note=row)
 
 
 @bp.route("/note/<int:note_id>/edit", methods=["POST"])
