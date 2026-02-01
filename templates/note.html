@@ -36,15 +36,15 @@
     {% endif %}
 
     <div class="header-actions">
-        <a href="{{ url_for('home') }}" class="button-link btn-secondary">← Back to list</a>
-        <a href="{{ url_for('download_note', note_id=note.id) }}" class="button-link btn-primary">Download as .txt</a>
-        <form action="{{ url_for('delete_note', note_id=note.id) }}" method="post" style="display:inline;">
+        <a href="{{ url_for('main.home') }}" class="button-link btn-secondary">← Back to list</a>
+        <a href="{{ url_for('main.download_note', note_id=note.id) }}" class="button-link btn-primary">Download as .txt</a>
+        <form action="{{ url_for('main.delete_note', note_id=note.id) }}" method="post" style="display:inline;">
             <button type="submit" class="btn-danger">Delete</button>
         </form>
     </div>
 
     <h2>Edit transcription</h2>
-    <form action="{{ url_for('edit_note', note_id=note.id) }}" method="post">
+    <form action="{{ url_for('main.edit_note', note_id=note.id) }}" method="post">
         <textarea name="content">{{ note.content }}</textarea>
         <br>
         <button type="submit" class="btn-primary">Save changes</button>
