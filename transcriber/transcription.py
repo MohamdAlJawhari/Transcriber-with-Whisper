@@ -34,9 +34,9 @@ def preload_model(app) -> None:
         _load_model(app.config["MODEL_DIR"])
 
 # Transcribe an audio file and return the transcribed text
-def transcribe_audio(filepath: str) -> str:
+def transcribe_audio_iter(filepath: str):
     """
-    Transcribe an audio file using Whisper and return the full text.
+    Yield (chunk_index, total_chunks, text) for each chunk.
 
     We chunk the audio into ~30-second segments because Whisper has
     a limited context window.
@@ -55,7 +55,7 @@ def transcribe_audio(filepath: str) -> str:
 
     total_samples = len(audio)
     if total_samples == 0:
-        return ""
+        return
 
     # 3. Split into chunks
     chunks = []
@@ -66,9 +66,6 @@ def transcribe_audio(filepath: str) -> str:
             chunks.append(chunk)
 
     print(f"Transcribing {len(chunks)} chunk(s)...")
-
-    # 4. Transcribe each chunk and join
-    all_texts = []
 
     for idx, chunk in enumerate(chunks, start=1):
         try:
@@ -87,11 +84,19 @@ def transcribe_audio(filepath: str) -> str:
             text = text.strip()
 
             print(f"Chunk {idx}/{len(chunks)}: {len(chunk)} samples -> '{text[:50]}...'")
-            if text:
-                all_texts.append(text)
+            yield idx, len(chunks), text
         except Exception as e:
             print(f"Error transcribing chunk {idx}: {e}")
+            yield idx, len(chunks), ""
 
-    # 5. Combine texts from all chunks
+def transcribe_audio(filepath: str) -> str:
+    """
+    Transcribe an audio file using Whisper and return the full text.
+    """
+    all_texts = []
+    for _idx, _total, text in transcribe_audio_iter(filepath):
+        if text:
+            all_texts.append(text)
+
     full_text = " ".join(all_texts)
     return full_text.strip()

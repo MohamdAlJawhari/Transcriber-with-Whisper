@@ -1,6 +1,22 @@
 <div id="spinner" class="spinner-overlay">
     <div class="spinner-box">
         <div class="spinner-circle"></div>
-        <p>Transcribing, please wait...</p>
+        <p class="spinner-title">
+            Transcribing, please wait...
+            <span id="spinner-chunk" class="spinner-chunk">Chunk 0/0</span>
+        </p>
+        <div class="spinner-progress">
+            <div
+                id="spinner-progress-track"
+                class="spinner-progress-track"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+            >
+                <div id="spinner-progress-bar" class="spinner-progress-bar"></div>
+            </div>
+            <div id="spinner-percent" class="spinner-percent">0%</div>
+        </div>
     </div>
 </div>

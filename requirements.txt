@@ -12,3 +12,4 @@ werkzeug
 flask
 numpy<2
 torch
+waitress

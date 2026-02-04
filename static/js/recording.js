@@ -5,6 +5,10 @@
     const playbackEl = document.getElementById('playback');
     const uploadForm = document.getElementById('upload-form');
     const spinnerEl = document.getElementById('spinner');
+    const spinnerChunkEl = document.getElementById('spinner-chunk');
+    const spinnerPercentEl = document.getElementById('spinner-percent');
+    const spinnerProgressBarEl = document.getElementById('spinner-progress-bar');
+    const spinnerProgressTrackEl = document.getElementById('spinner-progress-track');
 
     if (!startBtn || !stopBtn || !statusEl || !playbackEl) {
         return;
@@ -13,8 +17,42 @@
     let mediaRecorder = null;
     let audioChunks = [];
 
+    function setSpinnerProgress(chunk, total) {
+        if (!spinnerChunkEl || !spinnerPercentEl || !spinnerProgressBarEl) {
+            return;
+        }
+
+        const safeTotal = Number.isFinite(total) && total > 0 ? total : 0;
+        const safeChunk = Number.isFinite(chunk) && chunk >= 0 ? chunk : 0;
+
+        if (!safeTotal) {
+            spinnerChunkEl.textContent = 'Chunk 0/0';
+            spinnerPercentEl.textContent = '0%';
+            spinnerProgressBarEl.style.width = '0%';
+            if (spinnerProgressTrackEl) {
+                spinnerProgressTrackEl.setAttribute('aria-valuenow', '0');
+            }
+            return;
+        }
+
+        const clampedChunk = Math.min(safeChunk, safeTotal);
+        const percent = Math.floor((clampedChunk / safeTotal) * 100);
+
+        spinnerChunkEl.textContent = `Chunk ${clampedChunk}/${safeTotal}`;
+        spinnerPercentEl.textContent = `${percent}%`;
+        spinnerProgressBarEl.style.width = `${percent}%`;
+        if (spinnerProgressTrackEl) {
+            spinnerProgressTrackEl.setAttribute('aria-valuenow', String(percent));
+        }
+    }
+
+    function resetSpinnerProgress() {
+        setSpinnerProgress(0, 0);
+    }
+
     function showSpinner() {
         if (spinnerEl) {
+            resetSpinnerProgress();
             spinnerEl.style.display = 'flex';
         }
     }
@@ -26,6 +64,110 @@
     }
 
     const transcribeUrl = document.body ? document.body.dataset.transcribeUrl : null;
+
+    async function transcribeWithProgress(formData) {
+        showSpinner();
+        if (statusEl) {
+            statusEl.textContent = 'Status: uploading & transcribing...';
+        }
+
+        let doneReceived = false;
+
+        function handlePayload(payload) {
+            if (!payload || typeof payload !== 'object') {
+                return;
+            }
+
+            if (payload.type === 'progress') {
+                setSpinnerProgress(payload.chunk, payload.total);
+                return;
+            }
+
+            if (payload.type === 'done') {
+                doneReceived = true;
+                if (payload.saved) {
+                    if (statusEl) {
+                        statusEl.textContent = 'Status: transcription complete. Reloading...';
+                    }
+                    window.location.reload();
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = 'Status: transcription finished with no text.';
+                    }
+                    hideSpinner();
+                    alert(payload.message || 'Transcription finished but no text was produced.');
+                }
+                return;
+            }
+
+            if (payload.type === 'error') {
+                doneReceived = true;
+                if (statusEl) {
+                    statusEl.textContent = 'Status: error during transcription.';
+                }
+                hideSpinner();
+                alert(payload.message || 'Error during transcription. Check server logs.');
+            }
+        }
+
+        function processBuffer(buffer) {
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) {
+                    continue;
+                }
+                try {
+                    handlePayload(JSON.parse(trimmed));
+                } catch (err) {
+                    console.warn('Failed to parse progress update:', trimmed);
+                }
+            }
+            return buffer;
+        }
+
+        try {
+            const response = await fetch(transcribeUrl || '/transcribe', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Transcribe-Stream': '1',
+                },
+            });
+
+            if (!response.ok || !response.body) {
+                throw new Error('Transcription failed with status ' + response.status);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    break;
+                }
+                buffer += decoder.decode(value, { stream: true });
+                buffer = processBuffer(buffer);
+            }
+
+            buffer += decoder.decode();
+            processBuffer(buffer);
+
+            if (!doneReceived) {
+                hideSpinner();
+            }
+        } catch (err) {
+            console.error(err);
+            if (statusEl) {
+                statusEl.textContent = 'Status: error during transcription.';
+            }
+            hideSpinner();
+            alert('Error during transcription. Check server logs.');
+        }
+    }
 
     async function initMedia() {
         try {
@@ -46,7 +188,9 @@
             };
 
             mediaRecorder.onstop = async () => {
-                statusEl.textContent = 'Status: recording stopped. Preparing upload...';
+                if (statusEl) {
+                    statusEl.textContent = 'Status: recording stopped. Preparing upload...';
+                }
 
                 const blob = new Blob(audioChunks, { type: 'audio/webm' });
 
@@ -58,28 +202,7 @@
                 const fileName = 'recording.webm';
                 formData.append('audio', blob, fileName);
 
-                try {
-                    statusEl.textContent = 'Status: uploading & transcribing...';
-                    showSpinner();
-                    const response = await fetch(transcribeUrl || '/transcribe', {
-                        method: 'POST',
-                        body: formData,
-                    });
-
-                    if (response.ok) {
-                        statusEl.textContent = 'Status: transcription complete. Reloading...';
-                        window.location.reload();
-                    } else {
-                        statusEl.textContent = 'Status: error during transcription (HTTP ' + response.status + ')';
-                        hideSpinner();
-                        alert('Error during transcription. Check server logs.');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    statusEl.textContent = 'Status: error sending recording.';
-                    hideSpinner();
-                    alert('Failed to send recording to server.');
-                }
+                await transcribeWithProgress(formData);
             };
         } catch (err) {
             console.error('Could not access microphone:', err);
@@ -108,8 +231,14 @@
     });
 
     if (uploadForm) {
-        uploadForm.addEventListener('submit', () => {
-            showSpinner();
+        uploadForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (!uploadForm.checkValidity()) {
+                uploadForm.reportValidity();
+                return;
+            }
+            const formData = new FormData(uploadForm);
+            transcribeWithProgress(formData);
         });
     }
 })();

@@ -1,10 +1,22 @@
+import json
 import os
 import uuid
-from flask import Blueprint, Response, abort, redirect, render_template, request, url_for, current_app, send_from_directory
+from flask import (
+    Blueprint,
+    Response,
+    abort,
+    redirect,
+    render_template,
+    request,
+    url_for,
+    current_app,
+    send_from_directory,
+    stream_with_context,
+)
 from werkzeug.utils import secure_filename
 
 from ..db import get_connection
-from ..transcription import transcribe_audio
+from ..transcription import transcribe_audio, transcribe_audio_iter
 from ..utils import allowed_file
 
 bp = Blueprint("main", __name__)
@@ -40,18 +52,66 @@ def create_note():
 def transcribe_audio_route():
     """Handle audio file upload, transcribe it, and save as a note."""
     file = request.files.get("audio")
+    stream = request.headers.get("X-Transcribe-Stream") == "1"
 
     if not file or file.filename == "":
+        if stream:
+            return ("Missing audio file.", 400)
         return redirect(url_for(".home"))
 
     if not allowed_file(file.filename):
         print("Rejected file with invalid extension:", file.filename)
+        if stream:
+            return ("Invalid audio file type.", 400)
         return redirect(url_for(".home"))
 
     safe_name = secure_filename(file.filename)
     unique_name = f"{uuid.uuid4().hex}_{safe_name}"
     filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], unique_name)
     file.save(filepath)
+
+    if stream:
+        def generate():
+            all_texts = []
+            try:
+                for idx, total, text in transcribe_audio_iter(filepath):
+                    if text:
+                        all_texts.append(text)
+                    payload = {"type": "progress", "chunk": idx, "total": total}
+                    yield json.dumps(payload) + "\n"
+
+                full_text = " ".join(all_texts).strip()
+                saved = False
+                if full_text:
+                    conn = get_connection()
+                    conn.execute(
+                        "INSERT INTO notes (content, audio_path) VALUES (?, ?)",
+                        (full_text, unique_name),
+                    )
+                    conn.commit()
+                    conn.close()
+                    saved = True
+                else:
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+
+                payload = {"type": "done", "saved": saved}
+                if not saved:
+                    payload["message"] = "No transcription text was produced."
+                yield json.dumps(payload) + "\n"
+            except Exception as e:
+                print("Error during transcription:", e)
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                payload = {"type": "error", "message": "Error during transcription."}
+                yield json.dumps(payload) + "\n"
+
+        headers = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+        return Response(
+            stream_with_context(generate()),
+            mimetype="application/x-ndjson",
+            headers=headers,
+        )
 
     try:
         text = transcribe_audio(filepath)

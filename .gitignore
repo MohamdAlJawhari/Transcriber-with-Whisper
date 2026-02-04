@@ -42,3 +42,7 @@ notes.db
 
 # Downloaded model assets (if generated locally)
 model/
+
+# PyInstaller build artifacts
+build/
+dist/
