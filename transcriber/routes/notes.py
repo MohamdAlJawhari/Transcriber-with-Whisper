@@ -34,6 +34,11 @@ def home():
     return render_template("pages/index.html", notes=rows)
 
 
+@bp.route("/ping", methods=["POST"])
+def heartbeat():
+    return ("", 204)
+
+
 @bp.route("/create", methods=["POST"])
 def create_note():
     """Create a new note in the database (manual text)."""
@@ -69,6 +74,10 @@ def transcribe_audio_route():
     unique_name = f"{uuid.uuid4().hex}_{safe_name}"
     filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], unique_name)
     file.save(filepath)
+    try:
+        print(f"Saved upload: {filepath} ({os.path.getsize(filepath)} bytes)")
+    except Exception:
+        print(f"Saved upload: {filepath} (size unavailable)")
 
     if stream:
         def generate():

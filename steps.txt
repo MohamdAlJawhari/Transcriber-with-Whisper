@@ -1,0 +1,37 @@
+Here’s the exact, simple flow you can follow and send to users.
+
+Build on your PC (once)
+1) CPU‑only (works on any PC):
+```powershell
+.\build_windows_cpu.ps1
+```
+This creates: `dist_cpu\FlaskTranscriber\`
+
+2) Optional: create one‑file installer:
+```powershell
+.\build_installer.ps1 -Flavor cpu
+```
+This creates: `dist_installer\FlaskTranscriber_Setup.exe`
+
+What file/folder you send
+Option A (no installer, just folder):
+- Send the entire folder `dist_cpu\FlaskTranscriber\`
+
+Option B (installer, one file):
+- Send `dist_installer\FlaskTranscriber_Setup.exe`
+
+What the user does
+Option A (folder):
+1. Copy the folder anywhere (Desktop is fine).
+2. Run `FlaskTranscriber.exe`.
+3. Browser opens automatically.
+
+Option B (installer):
+1. Run `FlaskTranscriber_Setup.exe`.
+2. It installs, creates Start Menu + optional Desktop shortcut.
+3. Run it from the shortcut; browser opens automatically.
+
+If you want to include your existing notes for them:
+- Copy `notes.db` and the `uploads` folder into the `dist_cpu\FlaskTranscriber\` folder before you send it.
+
+That’s all. If you want the installer to show your name/version or a custom icon, tell me what to set.

@@ -1,4 +1,29 @@
 (function () {
+    const heartbeatUrl = '/ping';
+    const heartbeatIntervalMs = 15000;
+
+    function sendHeartbeat(useBeacon = false) {
+        if (!heartbeatUrl) {
+            return;
+        }
+        if (useBeacon && navigator.sendBeacon) {
+            navigator.sendBeacon(heartbeatUrl);
+            return;
+        }
+        fetch(heartbeatUrl, {
+            method: 'POST',
+            keepalive: true,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: '{}',
+        }).catch(() => {});
+    }
+
+    sendHeartbeat();
+    window.setInterval(sendHeartbeat, heartbeatIntervalMs);
+    window.addEventListener('pagehide', () => sendHeartbeat(true));
+
     const startBtn = document.getElementById('start-record-btn');
     const stopBtn = document.getElementById('stop-record-btn');
     const statusEl = document.getElementById('record-status');

@@ -44,6 +44,7 @@ def transcribe_audio_iter(filepath: str):
     processor, model, device = _load_model(current_app.config["MODEL_DIR"])
 
     # 1. Load full audio and resample to 16kHz
+    print(f"Loading audio: {filepath}")
     audio, _ = librosa.load(filepath, sr=16000)
     if audio.ndim > 1:
         # If stereo, convert to mono
@@ -55,6 +56,7 @@ def transcribe_audio_iter(filepath: str):
 
     total_samples = len(audio)
     if total_samples == 0:
+        print("Audio file has 0 samples after loading.")
         return
 
     # 3. Split into chunks

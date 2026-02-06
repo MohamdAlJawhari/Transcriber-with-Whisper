@@ -10,3 +10,4 @@ class Config:
     MODEL_DIR = str(BASE_DIR / "model")
     MAX_CHUNK_SECONDS = 25
     PRELOAD_MODEL = True
+    IDLE_SHUTDOWN_SECONDS = 120

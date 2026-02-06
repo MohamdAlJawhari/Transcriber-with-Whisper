@@ -5,6 +5,7 @@ __pycache__/
 
 # Virtual environments
 .venv/
+.venv-*/
 venv/
 env/
 ENV/
@@ -46,3 +47,9 @@ model/
 # PyInstaller build artifacts
 build/
 dist/
+build_cpu/
+dist_cpu/
+dist_installer/
+
+# Runtime logs (created when running launcher.py / PyInstaller --noconsole)
+app.log
